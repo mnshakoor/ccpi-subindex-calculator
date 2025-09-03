@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quanta Analytica MNS Consulting - CCPI Subindex Calculator</title>
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+<style>
+  :root{
+    /* MNS palette */
+    --bg:#0a1020; --panel:#0f172a; --text:#e6edf3; --muted:#9fb0c3;
+    --accent:#4ea8ff; --border:#243148; --card:#0b1324;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  header{padding:20px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#0a1020,#0c1326)}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:44px;height:44px}
+  h1{font-size:20px;margin:0}
+  .subtitle{color:var(--muted);font-size:13px;margin-top:4px}
+  nav[role="tablist"]{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+  .tab{padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--panel);cursor:pointer;color:var(--muted)}
+  .tab[aria-selected="true"]{color:var(--text);border-color:var(--accent);box-shadow:0 0 0 1px rgba(78,168,255,.25) inset}
+  main{padding:18px;max-width:1200px;margin:0 auto}
+  .section{border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:16px;margin-bottom:16px}
+  .section h2{margin:0 0 10px;font-size:18px}
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+  .col-12{grid-column:span 12} .col-6{grid-column:span 6} .col-4{grid-column:span 4}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+  input[type="number"], input[type="text"], select, textarea {width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text)}
+  input[type="checkbox"]{transform:scale(1.1)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:#0b1324;color:var(--text);cursor:pointer}
+  .btn.small{padding:6px 10px;font-size:12px}
+  .hr{height:1px;background:var(--border);margin:12px 0}
+  table{width:100%;border-collapse:collapse}
+  th,td{border:1px solid var(--border);padding:8px;font-size:12px;vertical-align:top}
+  th{background:#0e1a32;color:var(--text);position:sticky;top:0}
+  .pill{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid var(--border);font-size:11px;color:var(--muted)}
+  .badge{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid var(--border);display:inline-block}
+  .badge.watch{background:#203449}
+  .badge.elev{background:#26371d}
+  .badge.high{background:#3a2b18}
+  .badge.crit{background:#3a1818}
+  .status{color:var(--muted);font-size:12px}
+  .sliderwrap{display:flex;gap:10px;align-items:center}
+  .sliderwrap input[type="range"]{width:180px}
+  .code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;background:#0b1324;border:1px solid var(--border);border-radius:8px;padding:8px;white-space:pre;overflow:auto}
+  .dropzone{border:2px dashed var(--border);border-radius:14px;padding:16px;text-align:center;color:var(--muted)}
+  .dropzone.drag{border-color:var(--accent);color:var(--text);background:rgba(78,168,255,.06)}
+  footer{color:var(--muted);font-size:12px;padding:20px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <!-- Inline SVG logo, fully self contained -->
+    <svg class="logo" viewBox="0 0 64 64" aria-label="Quanta Analytica MNS logo" role="img">
+      <defs>
+        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#4ea8ff"/>
+          <stop offset="50%" stop-color="#7a6cff"/>
+          <stop offset="100%" stop-color="#42d1ff"/>
+        </linearGradient>
+      </defs>
+      <rect x="2" y="2" width="60" height="60" rx="12" fill="url(#g1)" opacity="0.25" stroke="#4ea8ff" stroke-width="2"/>
+      <circle cx="32" cy="32" r="16" fill="none" stroke="#4ea8ff" stroke-width="2"/>
+      <path d="M20,38 L28,26 L36,34 L44,22" stroke="#a5b4fc" stroke-width="3" fill="none" />
+      <text x="11" y="54" font-size="10" font-family="Inter,Arial" fill="#c7d2fe">QA MNS</text>
+    </svg>
+    <div>
+      <h1>Quanta Analytica MNS Consulting - CCPI Subindex Calculator</h1>
+      <div class="subtitle">Single file analyst tool for composite risk scoring with imports and templates</div>
+    </div>
+  </div>
+  <nav role="tablist" aria-label="App tabs">
+    <button role="tab" class="tab" aria-selected="true" aria-controls="tab-calculator" id="tabbtn-calculator">Calculator</button>
+    <button role="tab" class="tab" aria-selected="false" aria-controls="tab-indicators" id="tabbtn-indicators">Indicators</button>
+    <button role="tab" class="tab" aria-selected="false" aria-controls="tab-io" id="tabbtn-io">Data I/O</button>
+    <button role="tab" class="tab" aria-selected="false" aria-controls="tab-schema" id="tabbtn-schema">Schema Template</button>
+    <button role="tab" class="tab" aria-selected="false" aria-controls="tab-about" id="tabbtn-about">About</button>
+  </nav>
+</header>
+
+<main>
+  <!-- Calculator -->
+  <section id="tab-calculator" role="tabpanel" aria-labelledby="tabbtn-calculator">
+    <div class="section">
+      <h2>Subindex dashboard</h2>
+      <p class="status">Average level and momentum come from the Indicators table. Adjust momentum weights below. Range 0 to 0.25.</p>
+      <div class="grid" id="calc-cards"></div>
+      <div class="hr"></div>
+      <div class="grid">
+        <div class="col-6">
+          <label>Event flags</label>
+          <div class="row">
+            <label class="row"><input type="checkbox" id="flag-violent"> Violent transfer cue (+0.05)</label>
+            <label class="row"><input type="checkbox" id="flag-ultimatum"> Military ultimatum or mutiny cue (+0.05)</label>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="row">
+            <div class="pill">Watch 0.30 to 0.49</div>
+            <div class="pill">Elevated 0.50 to 0.69</div>
+            <div class="pill">High 0.70 to 0.84</div>
+            <div class="pill">Critical 0.85 to 1.00</div>
+          </div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div class="grid">
+        <div class="col-6"><canvas id="ccpiChart" height="220" aria-label="CCPI bar chart"></canvas></div>
+        <div class="col-6">
+          <div class="section">
+            <h2>Composite results</h2>
+            <div id="results">
+              <p>CCPI base: <strong id="ccpi-base">0.000</strong></p>
+              <p>Flags total: <strong id="ccpi-flags">0.000</strong></p>
+              <p>CCPI: <strong id="ccpi-total">0.000</strong> <span id="ccpi-band" class="badge watch">Watch</span></p>
+            </div>
+            <div class="hr"></div>
+            <div class="row">
+              <button class="btn small" id="saveSession">Save session</button>
+              <input type="file" id="loadSession" hidden>
+              <button class="btn small" id="loadSessionBtn">Load session</button>
+            </div>
+            <p class="status" id="statusLine">Ready.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Indicators -->
+  <section id="tab-indicators" role="tabpanel" aria-labelledby="tabbtn-indicators" hidden>
+    <div class="section">
+      <h2>Global indicators table</h2>
+      <div class="row" style="margin-bottom:10px">
+        <button class="btn small" id="addRowBtn">Add row</button>
+        <button class="btn small" id="delRowsBtn">Delete selected</button>
+        <button class="btn small" id="resetDefaultsBtn">Reset to defaults</button>
+        <span class="status" id="indStatus"></span>
+      </div>
+      <div style="max-height:420px;overflow:auto;border:1px solid var(--border);border-radius:10px">
+        <table id="indTable">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="checkAll"></th>
+              <th>subindex</th><th>indicator_name</th><th>source</th><th>direction_to_risk</th>
+              <th>min_bound</th><th>max_bound</th><th>current_value</th><th>prior_value</th>
+              <th>level_normalized</th><th>momentum_mstar</th><th>explanation</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Data I/O -->
+  <section id="tab-io" role="tabpanel" aria-labelledby="tabbtn-io" hidden>
+    <div class="section">
+      <h2>Import data</h2>
+      <div class="grid">
+        <div class="col-4"><label>JSON file</label><input type="file" id="jsonFile" accept=".json"></div>
+        <div class="col-4"><label>CSV file</label><input type="file" id="csvFile" accept=".csv"></div>
+        <div class="col-4"><label>Excel file</label><input type="file" id="xlsxFile" accept=".xlsx,.xls"></div>
+        <div class="col-12"><div class="dropzone" id="dropzone">Drag and drop JSON, CSV, or Excel here</div></div>
+      </div>
+      <div class="hr"></div>
+      <h3>Validation report</h3>
+      <pre class="code" id="validationReport">No import attempted.</pre>
+      <div class="row"><button class="btn small" id="downloadRejectsBtn" disabled>Download rejected rows CSV</button></div>
+    </div>
+
+    <div class="section">
+      <h2>Export data</h2>
+      <div class="row" style="margin-bottom:8px">
+        <button class="btn small" id="exportJSON">Export JSON</button>
+        <button class="btn small" id="exportCSV">Export CSV</button>
+        <button class="btn small" id="exportXLSX">Export Excel</button>
+      </div>
+      <details>
+        <summary>Watch-card JSON export</summary>
+        <div class="grid" style="margin-top:8px">
+          <div class="col-4"><label>Country</label><input id="wc-country" type="text" placeholder="Country name"></div>
+          <div class="col-4"><label>Owner</label><input id="wc-owner" type="text" placeholder="Risk owner"></div>
+          <div class="col-4"><label>Review date YYYY-MM-DD</label><input id="wc-review" type="text" placeholder="2025-12-31"></div>
+        </div>
+        <div class="row" style="margin-top:8px"><button class="btn small" id="exportWatchCard">Export Watch-card JSON</button></div>
+        <pre class="code" id="watchCardOut"></pre>
+      </details>
+    </div>
+
+    <div class="section">
+      <h2>Session</h2>
+      <div class="row">
+        <button class="btn small" id="saveSession2">Save session</button>
+        <input type="file" id="loadSession2" hidden>
+        <button class="btn small" id="loadSessionBtn2">Load session</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Testing</h2>
+      <button class="btn small" id="loadSample">Load sample rows</button>
+      <p class="status">Loads a compact test dataset with at least two indicators per subindex.</p>
+    </div>
+  </section>
+
+  <!-- Schema -->
+  <section id="tab-schema" role="tabpanel" aria-labelledby="tabbtn-schema" hidden>
+    <div class="section">
+      <h2>Schema for imports</h2>
+      <div class="code" id="schemaJSON"></div>
+      <div class="hr"></div>
+      <h3>CSV header</h3>
+      <div class="code" id="csvHeader"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn small" id="downloadCSVTemplate">Download CSV template</button>
+        <button class="btn small" id="downloadJSONTemplate">Download JSON template</button>
+        <button class="btn small" id="downloadExcelTemplate">Download Excel template</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="tab-about" role="tabpanel" aria-labelledby="tabbtn-about" hidden>
+    <div class="section">
+      <h2>About CCPI and this app</h2>
+      <ul>
+        <li>Subindices and weights: GI 0.30, PCS 0.25, SP 0.20, SED 0.15, EXT 0.10.</li>
+        <li>Normalization: map to 0 to 1 where 1 is higher coup risk. Use direction and bounds.</li>
+        <li>Momentum: blend within each subindex up to 0.25 weight based on year over year change.</li>
+        <li>Flags: +0.05 for violent transfer cue and +0.05 for public military ultimatum or mutiny cue.</li>
+        <li>Bands: Watch 0.30 to 0.49; Elevated 0.50 to 0.69; High 0.70 to 0.84; Critical 0.85 to 1.00.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer>© <span id="year"></span> Quanta Analytica MNS Consulting. Single file, no framework.</footer>
+
+<script>
+const SUBS=["GI","PCS","SP","SED","EXT"];
+const WEIGHTS={GI:0.30,PCS:0.25,SP:0.20,SED:0.15,EXT:0.10};
+const DEFAULT_MW={GI:0.25,PCS:0.20,SP:0.20,SED:0.15,EXT:0.10};
+const CSV_HEADER="subindex,indicator_name,source,direction_to_risk,min_bound,max_bound,current_value,prior_value,explanation";
+const SCHEMA={subindex:"GI | PCS | SP | SED | EXT",indicator_name:"string",source:"string",direction_to_risk:"Higher or Lower",min_bound:"number",max_bound:"number",current_value:"number or blank",prior_value:"number or blank",level_normalized:"auto computed 0 to 1",momentum_mstar:"auto computed 0 to 1",explanation:"string"};
+
+function defaultRows(){return[
+  {subindex:"GI",indicator_name:"WGI Control of Corruption",source:"World Bank WGI",direction_to_risk:"Lower",min_bound:-2.5,max_bound:2.5,current_value:-0.8,prior_value:-0.9,level_normalized:null,momentum_mstar:null,explanation:"Invert to risk"},
+  {subindex:"GI",indicator_name:"WGI Rule of Law",source:"World Bank WGI",direction_to_risk:"Lower",min_bound:-2.5,max_bound:2.5,current_value:-1.0,prior_value:-1.05,level_normalized:null,momentum_mstar:null,explanation:"Invert to risk"},
+  {subindex:"GI",indicator_name:"WGI Voice and Accountability",source:"World Bank WGI",direction_to_risk:"Lower",min_bound:-2.5,max_bound:2.5,current_value:-1.2,prior_value:-1.15,level_normalized:null,momentum_mstar:null,explanation:"Invert to risk"},
+  {subindex:"GI",indicator_name:"Freedom House aggregate",source:"Freedom House",direction_to_risk:"Lower",min_bound:0,max_bound:100,current_value:44,prior_value:47,level_normalized:null,momentum_mstar:null,explanation:"Invert to risk"},
+  {subindex:"GI",indicator_name:"Transparency International CPI",source:"TI CPI",direction_to_risk:"Lower",min_bound:0,max_bound:100,current_value:28,prior_value:30,level_normalized:null,momentum_mstar:null,explanation:"Invert to risk"},
+  {subindex:"GI",indicator_name:"V-Dem EDI",source:"V-Dem",direction_to_risk:"Lower",min_bound:0,max_bound:1,current_value:0.35,prior_value:0.37,level_normalized:null,momentum_mstar:null,explanation:"Invert to risk"},
+  {subindex:"PCS",indicator_name:"FSI Factionalized Elites",source:"Fund for Peace",direction_to_risk:"Higher",min_bound:0,max_bound:10,current_value:8.0,prior_value:7.8,level_normalized:null,momentum_mstar:null,explanation:"Higher is worse"},
+  {subindex:"PCS",indicator_name:"GPI Violent demonstrations",source:"IEP GPI",direction_to_risk:"Higher",min_bound:1,max_bound:5,current_value:4.0,prior_value:3.5,level_normalized:null,momentum_mstar:null,explanation:"Higher is worse"},
+  {subindex:"PCS",indicator_name:"GPI Political instability",source:"IEP GPI",direction_to_risk:"Higher",min_bound:1,max_bound:5,current_value:3.5,prior_value:3.0,level_normalized:null,momentum_mstar:null,explanation:"Higher is worse"},
+  {subindex:"SP",indicator_name:"FSI Security Apparatus",source:"Fund for Peace",direction_to_risk:"Higher",min_bound:0,max_bound:10,current_value:8.7,prior_value:8.3,level_normalized:null,momentum_mstar:null,explanation:"Higher is worse"},
+  {subindex:"SP",indicator_name:"FSI Refugees and IDPs",source:"Fund for Peace",direction_to_risk:"Higher",min_bound:0,max_bound:10,current_value:7.5,prior_value:7.2,level_normalized:null,momentum_mstar:null,explanation:"Higher is worse"},
+  {subindex:"SP",indicator_name:"V-Dem internal conflict",source:"V-Dem",direction_to_risk:"Higher",min_bound:0,max_bound:1,current_value:0.70,prior_value:0.65,level_normalized:null,momentum_mstar:null,explanation:"Higher is worse"},
+  {subindex:"SED",indicator_name:"Annual inflation percent",source:"World Bank",direction_to_risk:"Higher",min_bound:0,max_bound:50,current_value:18,prior_value:12,level_normalized:null,momentum_mstar:null,explanation:"Higher is worse"},
+  {subindex:"SED",indicator_name:"GDP per capita trend percent",source:"World Bank",direction_to_risk:"Lower",min_bound:-10,max_bound:10,current_value:-2,prior_value:0,level_normalized:null,momentum_mstar:null,explanation:"Lower is worse"},
+  {subindex:"SED",indicator_name:"BTI Status Index",source:"Bertelsmann BTI",direction_to_risk:"Lower",min_bound:1,max_bound:10,current_value:4.5,prior_value:4.8,level_normalized:null,momentum_mstar:null,explanation:"Invert to risk"},
+  {subindex:"SED",indicator_name:"WGI Government Effectiveness",source:"World Bank WGI",direction_to_risk:"Lower",min_bound:-2.5,max_bound:2.5,current_value:-0.9,prior_value:-0.85,level_normalized:null,momentum_mstar:null,explanation:"Invert to risk"},
+  {subindex:"EXT",indicator_name:"FSI External Intervention",source:"Fund for Peace",direction_to_risk:"Higher",min_bound:0,max_bound:10,current_value:8.0,prior_value:7.5,level_normalized:null,momentum_mstar:null,explanation:"Higher is worse"}
+]}
+
+const appState={rows:defaultRows(),momentumWeights:{...DEFAULT_MW},flags:{violent:false,ultimatum:false},results:{}};
+const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,Number(v)));
+const isNum=(v)=>v!==null && v!=="" && !isNaN(Number(v));
+function fmt(n,dp=3){return (Number(n)||0).toFixed(dp)}
+function band(score){if(score>=0.85)return{name:"Critical",className:"crit"};if(score>=0.70)return{name:"High",className:"high"};if(score>=0.50)return{name:"Elevated",className:"elev"};if(score>=0.30)return{name:"Watch",className:"watch"};return{name:"Sub-watch",className:"watch"}}
+
+function normalizeLevel(r){const d=r.direction_to_risk,x=r.current_value,xmin=r.min_bound,xmax=r.max_bound;if(!isNum(x)||!isNum(xmin)||!isNum(xmax)||xmax==xmin)return null;let val=(d==="Higher")?((x-xmin)/(xmax-xmin)):((xmax-x)/(xmax-xmin));return clamp(val,0,1)}
+function computeMomentum(r){const d=r.direction_to_risk,x=r.current_value,xp=r.prior_value,xmin=r.min_bound,xmax=r.max_bound;if(!isNum(x)||!isNum(xp)||!isNum(xmin)||!isNum(xmax)||xmax==xmin)return null;const share=(x-xp)/(xmax-xmin);const m=(d==="Higher")?share:-share;return clamp(0.5+0.5*m,0,1)}
+function aggregateSubindex(code){const rows=appState.rows.filter(r=>r.subindex===code);const lv=rows.map(r=>r.level_normalized).filter(v=>v!==null);const mo=rows.map(r=>r.momentum_mstar).filter(v=>v!==null);const avgL=lv.length?lv.reduce((a,b)=>a+b,0)/lv.length:0;const avgM=mo.length?mo.reduce((a,b)=>a+b,0)/mo.length:0.5;const w=clamp(appState.momentumWeights[code]??0,0,0.25);const final=(1-w)*avgL+w*avgM;return{avgLevel:avgL,avgMom:avgM,w,final,n:lv.length}}
+function recalcAll(){for(const r of appState.rows){r.level_normalized=normalizeLevel(r);r.momentum_mstar=computeMomentum(r)}const agg={};for(const s of SUBS){agg[s]=aggregateSubindex(s)}const base=WEIGHTS.GI*agg.GI.final+WEIGHTS.PCS*agg.PCS.final+WEIGHTS.SP*agg.SP.final+WEIGHTS.SED*agg.SED.final+WEIGHTS.EXT*agg.EXT.final;const flags=(appState.flags.violent?0.05:0)+(appState.flags.ultimatum?0.05:0);const total=clamp(base+flags,0,1);appState.results={agg,base,flags,total,band:band(total)};renderCalculator();renderChart();renderIndicators();updateStatus()}
+
+function makeCard(title, code){
+  const d=document.createElement("div");
+  d.className="section col-6";
+  d.innerHTML=`
+    <h3 style="margin:0 0 8px;font-size:16px">${title} <span class="pill">weight ${WEIGHTS[code]}</span></h3>
+    <div class="row">
+      <div><strong>avg level</strong> <span id="avg-${code}">0.000</span></div>
+      <div><strong>avg momentum</strong> <span id="mom-${code}">0.000</span></div>
+      <div class="sliderwrap">
+        <label for="mw-${code}">momentum weight</label>
+        <input type="range" min="0" max="0.25" step="0.01" id="mw-${code}" value="${appState.momentumWeights[code]}">
+        <input type="number" min="0" max="0.25" step="0.01" id="mwnum-${code}" value="${appState.momentumWeights[code]}" style="width:90px">
+      </div>
+    </div>
+    <p>subindex_final <strong id="final-${code}">0.000</strong></p>`;
+  return d;
+}
+
+function renderCalculator(){
+  if(!document.getElementById("avg-GI")){
+    const cards=document.getElementById("calc-cards");
+    cards.innerHTML="";
+    cards.appendChild(makeCard("Governance Integrity GI","GI"));
+    cards.appendChild(makeCard("Political Contestation Stress PCS","PCS"));
+    cards.appendChild(makeCard("Security Pressure SP","SP"));
+    cards.appendChild(makeCard("Socioeconomic Distress SED","SED"));
+    cards.appendChild(makeCard("External Intervention EXT","EXT"));
+    for(const s of SUBS){
+      const slider=document.getElementById(`mw-${s}`);
+      const num=document.getElementById(`mwnum-${s}`);
+      const sync=v=>{v=clamp(v,0,0.25);slider.value=v;num.value=v;appState.momentumWeights[s]=Number(v);recalcAll()};
+      slider.addEventListener("input",e=>sync(e.target.value));
+      num.addEventListener("input",e=>sync(e.target.value));
+    }
+    document.getElementById("flag-violent").addEventListener("change",e=>{appState.flags.violent=e.target.checked;recalcAll()});
+    document.getElementById("flag-ultimatum").addEventListener("change",e=>{appState.flags.ultimatum=e.target.checked;recalcAll()});
+  }
+  const a=appState.results.agg;
+  for(const s of SUBS){
+    document.getElementById(`avg-${s}`).textContent=fmt(a[s].avgLevel);
+    document.getElementById(`mom-${s}`).textContent=fmt(a[s].avgMom);
+    document.getElementById(`final-${s}`).textContent=fmt(a[s].final);
+    document.getElementById(`mw-${s}`).value=a[s].w;
+    document.getElementById(`mwnum-${s}`).value=a[s].w;
+  }
+  document.getElementById("ccpi-base").textContent=fmt(appState.results.base);
+  document.getElementById("ccpi-flags").textContent=fmt(appState.results.flags);
+  document.getElementById("ccpi-total").textContent=fmt(appState.results.total);
+  const bandEl=document.getElementById("ccpi-band");
+  bandEl.textContent=appState.results.band.name;
+  bandEl.className="badge "+appState.results.band.className;
+}
+
+let chart;
+function renderChart(){
+  const ctx=document.getElementById("ccpiChart");
+  const a=appState.results.agg;
+  const labels=["GI","PCS","SP","SED","EXT","CCPI base","CCPI flags"];
+  const values=[a.GI.final,a.PCS.final,a.SP.final,a.SED.final,a.EXT.final,appState.results.base,appState.results.total];
+  if(!chart){
+    chart=new Chart(ctx,{type:"bar",data:{labels,datasets:[{label:"Score",data:values}]},options:{indexAxis:"y",responsive:true,plugins:{legend:{display:false}},scales:{x:{min:0,max:1,ticks:{stepSize:0.1}}}}});
+  }else{
+    chart.data.labels=labels;
+    chart.data.datasets[0].data=values;
+    chart.update();
+  }
+}
+
+function renderIndicators(){
+  const tbody=document.querySelector("#indTable tbody");
+  tbody.innerHTML="";
+  appState.rows.forEach((r,idx)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td><input type="checkbox" data-idx="${idx}" class="rowcheck"></td>
+      <td>${selectSubindexHTML(idx,r.subindex)}</td>
+      <td><input type="text" data-k="indicator_name" data-idx="${idx}" value="${escapeHTML(r.indicator_name)}"></td>
+      <td><input type="text" data-k="source" data-idx="${idx}" value="${escapeHTML(r.source)}"></td>
+      <td>${selectDirectionHTML(idx,r.direction_to_risk)}</td>
+      <td><input type="number" step="0.01" data-k="min_bound" data-idx="${idx}" value="${safeNum(r.min_bound)}"></td>
+      <td><input type="number" step="0.01" data-k="max_bound" data-idx="${idx}" value="${safeNum(r.max_bound)}"></td>
+      <td><input type="number" step="0.01" data-k="current_value" data-idx="${idx}" value="${safeNum(r.current_value)}"></td>
+      <td><input type="number" step="0.01" data-k="prior_value" data-idx="${idx}" value="${safeNum(r.prior_value)}"></td>
+      <td>${fmt(r.level_normalized??0)}</td>
+      <td>${fmt(r.momentum_mstar??0)}</td>
+      <td><input type="text" data-k="explanation" data-idx="${idx}" value="${escapeHTML(r.explanation||"")}"></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll("input, select").forEach(el=>{
+    el.addEventListener("input",(e)=>{
+      const idx=Number(e.target.getAttribute("data-idx"));
+      const key=e.target.getAttribute("data-k");
+      if(key){
+        if(e.target.type==="number") appState.rows[idx][key]=e.target.value===""?"":Number(e.target.value);
+        else appState.rows[idx][key]=e.target.value;
+        recalcAll();
+      }
+    });
+  });
+  document.getElementById("checkAll").onclick=e=>{document.querySelectorAll(".rowcheck").forEach(cb=>cb.checked=e.target.checked)};
+  document.getElementById("indStatus").textContent=`Rows: ${appState.rows.length}. Included: ${appState.rows.filter(r=>r.level_normalized!==null).length}.`;
+}
+
+function escapeHTML(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+function safeNum(v){return v===null||v===""?"":Number(v)}
+function selectSubindexHTML(idx,val){const opts=SUBS.map(s=>`<option ${val===s?"selected":""} value="${s}">${s}</option>`).join("");return `<select data-k="subindex" data-idx="${idx}">${opts}</select>`}
+function selectDirectionHTML(idx,val){const opts=["Higher","Lower"].map(s=>`<option ${val===s?"selected":""} value="${s}">${s}</option>`).join("");return `<select data-k="direction_to_risk" data-idx="${idx}">${opts}</select>`}
+function updateStatus(){const now=new Date().toLocaleString();document.getElementById("statusLine").textContent=`Last calc ${now}. Valid indicators: ${appState.rows.filter(r=>r.level_normalized!==null).length}.`}
+
+function validateRows(rows){const errors=[],ok=[];const allowedSubs=new Set(SUBS);const allowedDir=new Set(["Higher","Lower"]);rows.forEach((r,i)=>{const n=i+1;if(!allowedSubs.has(r.subindex)){errors.push(`Row ${n}: invalid subindex ${r.subindex}`);return}if(!allowedDir.has(r.direction_to_risk)){errors.push(`Row ${n}: invalid direction_to_risk ${r.direction_to_risk}`);return}["min_bound","max_bound"].forEach(k=>{if(!isNum(r[k]))errors.push(`Row ${n}: ${k} must be number`)});["current_value","prior_value"].forEach(k=>{if(r[k]===""||r[k]===null||typeof r[k]==="undefined"){}else if(!isNum(r[k]))errors.push(`Row ${n}: ${k} must be number or blank`)});ok.push(r)});return{okRows:ok,errors}}
+
+function importJSONFile(file){const reader=new FileReader();reader.onload=()=>{try{const arr=JSON.parse(reader.result);if(!Array.isArray(arr))throw new Error("JSON must be an array of objects");const {okRows,errors}=validateRows(arr);appState.rows=okRows;recalcAll();document.getElementById("validationReport").textContent=errors.length?errors.join("\n"):"Import OK";setRejectsCSV(errors)}catch(err){document.getElementById("validationReport").textContent="JSON error: "+err.message}};reader.readAsText(file)}
+function importCSVFile(file){Papa.parse(file,{header:true,skipEmptyLines:true,complete:(res)=>{try{const rows=res.data.map(o=>({subindex:o.subindex?.trim(),indicator_name:o.indicator_name||"",source:o.source||"",direction_to_risk:o.direction_to_risk?.trim(),min_bound:Number(o.min_bound),max_bound:Number(o.max_bound),current_value:o.current_value===""||o.current_value==null?"":Number(o.current_value),prior_value:o.prior_value===""||o.prior_value==null?"":Number(o.prior_value),level_normalized:null,momentum_mstar:null,explanation:o.explanation||""}));const {okRows,errors}=validateRows(rows);appState.rows=okRows;recalcAll();document.getElementById("validationReport").textContent=errors.length?errors.join("\n"):"Import OK";setRejectsCSV(errors)}catch(err){document.getElementById("validationReport").textContent="CSV error: "+err.message}},error:(err)=>document.getElementById("validationReport").textContent="CSV parse error: "+err.message})}
+function importXLSXFile(file){const reader=new FileReader();reader.onload=(e)=>{try{const data=new Uint8Array(e.target.result);const wb=XLSX.read(data,{type:"array"});const ws=wb.Sheets["Indicators"]||wb.Sheets[wb.SheetNames[0]];const json=XLSX.utils.sheet_to_json(ws,{defval:""});const mapped=json.map(o=>({subindex:o.subindex||o.Subindex,indicator_name:o.indicator_name||o.Indicator||o.indicator||"",source:o.source||o.Source||"",direction_to_risk:o.direction_to_risk||o.Direction_to_risk||o.Direction||"",min_bound:Number(o.min_bound||o.Min_bound),max_bound:Number(o.max_bound||o.Max_bound),current_value:o.current_value===""?"":Number(o.current_value||o.Current_value),prior_value:o.prior_value===""?"":Number(o.prior_value||o.Prior_value),level_normalized:null,momentum_mstar:null,explanation:o.explanation||o.Explanation||""}));const {okRows,errors}=validateRows(mapped);appState.rows=okRows;recalcAll();document.getElementById("validationReport").textContent=errors.length?errors.join("\n"):"Import OK";setRejectsCSV(errors)}catch(err){document.getElementById("validationReport").textContent="Excel error: "+err.message}};reader.readAsArrayBuffer(file)}
+function exportJSON(){const blob=new Blob([JSON.stringify(appState.rows,null,2)],{type:"application/json"});downloadBlob(blob,"indicators.json")}
+function exportCSV(){const csv=Papa.unparse(appState.rows.map(r=>({subindex:r.subindex,indicator_name:r.indicator_name,source:r.source,direction_to_risk:r.direction_to_risk,min_bound:r.min_bound,max_bound:r.max_bound,current_value:r.current_value,prior_value:r.prior_value,explanation:r.explanation})));downloadBlob(new Blob([csv],{type:"text/csv"}),"indicators.csv")}
+function exportXLSX(){const data=[["subindex","indicator_name","source","direction_to_risk","min_bound","max_bound","current_value","prior_value","explanation"]];appState.rows.forEach(r=>data.push([r.subindex,r.indicator_name,r.source,r.direction_to_risk,r.min_bound,r.max_bound,r.current_value,r.prior_value,r.explanation]));const ws=XLSX.utils.aoa_to_sheet(data);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Indicators");const out=XLSX.write(wb,{bookType:"xlsx",type:"array"});downloadBlob(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),"indicators.xlsx")}
+function exportWatchCard(){const country=document.getElementById("wc-country").value||"Unknown";const owner=document.getElementById("wc-owner").value||"Unassigned";const review=document.getElementById("wc-review").value||"";const payload={country,ccpi:Number(fmt(appState.results.total)),band:appState.results.band.name,last_updated_utc:new Date().toISOString(),owner,review_date:review,signposts_snapshot:[]};const txt=JSON.stringify(payload,null,2);document.getElementById("watchCardOut").textContent=txt;downloadBlob(new Blob([txt],{type:"application/json"}),`ccpi_watchcard_${country.replace(/\s+/g,'_').toLowerCase()}.json`)}
+function downloadTemplate(type){if(type==="csv"){downloadBlob(new Blob([CSV_HEADER+"\n"],{type:"text/csv"}),"ccpi_schema_template.csv")}else if(type==="json"){const example=[{subindex:"GI",indicator_name:"WGI Control of Corruption",source:"World Bank WGI",direction_to_risk:"Lower",min_bound:-2.5,max_bound:2.5,current_value:"",prior_value:"",explanation:"Invert to risk"}];downloadBlob(new Blob([JSON.stringify(example,null,2)],{type:"application/json"}),"ccpi_schema_template.json")}else if(type==="xlsx"){const data=[["subindex","indicator_name","source","direction_to_risk","min_bound","max_bound","current_value","prior_value","explanation"]];const ws=XLSX.utils.aoa_to_sheet(data);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Indicators");const out=XLSX.write(wb,{bookType:"xlsx",type:"array"});downloadBlob(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),"ccpi_schema_template.xlsx")}}
+function downloadBlob(blob,filename){const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url)}
+function setRejectsCSV(errors){const btn=document.getElementById("downloadRejectsBtn");if(!errors||!errors.length){btn.disabled=true;btn.onclick=null;return}btn.disabled=false;btn.onclick=()=>{const rows=errors.map((e,i)=>({row:i+1,error:e}));const csv=Papa.unparse(rows);downloadBlob(new Blob([csv],{type:"text/csv"}),"import_rejects.csv")}}
+function saveSession(){downloadBlob(new Blob([JSON.stringify(appState,null,2)],{type:"application/json"}),"ccpi_session.json")}
+function loadSession(file){const r=new FileReader();r.onload=()=>{try{const data=JSON.parse(r.result);if(!data.rows)throw new Error("Missing rows");Object.assign(appState,data);recalcAll()}catch(err){alert("Session load error: "+err.message)}};r.readAsText(file)}
+function setupTabs(){const tabs=[{btn:"tabbtn-calculator",panel:"tab-calculator"},{btn:"tabbtn-indicators",panel:"tab-indicators"},{btn:"tabbtn-io",panel:"tab-io"},{btn:"tabbtn-schema",panel:"tab-schema"},{btn:"tabbtn-about",panel:"tab-about"}];tabs.forEach(({btn,panel},i)=>{const b=document.getElementById(btn),p=document.getElementById(panel);b.addEventListener("click",()=>{tabs.forEach(({btn:bb,panel:pp})=>{document.getElementById(bb).setAttribute("aria-selected","false");document.getElementById(pp).hidden=true});b.setAttribute("aria-selected","true");p.hidden=false;if(panel==="tab-calculator"){renderChart()}});b.addEventListener("keydown",e=>{if(e.key==="ArrowRight"||e.key==="ArrowLeft"){const dir=e.key==="ArrowRight"?1:-1;let ni=(i+dir+tabs.length)%tabs.length;document.getElementById(tabs[ni].btn).focus()}})})}
+function init(){document.getElementById("year").textContent=new Date().getFullYear();document.getElementById("schemaJSON").textContent=JSON.stringify(SCHEMA,null,2);document.getElementById("csvHeader").textContent=CSV_HEADER;document.getElementById("jsonFile").addEventListener("change",e=>e.target.files[0]&&importJSONFile(e.target.files[0]));document.getElementById("csvFile").addEventListener("change",e=>e.target.files[0]&&importCSVFile(e.target.files[0]));document.getElementById("xlsxFile").addEventListener("change",e=>e.target.files[0]&&importXLSXFile(e.target.files[0]));const dz=document.getElementById("dropzone");dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag")});dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("drag");const file=e.dataTransfer.files[0];if(!file)return;const name=file.name.toLowerCase();if(name.endsWith(".json"))importJSONFile(file);else if(name.endsWith(".csv"))importCSVFile(file);else if(name.endsWith(".xlsx")||name.endsWith(".xls"))importXLSXFile(file);else alert("Unsupported file type")});document.getElementById("exportJSON").addEventListener("click",exportJSON);document.getElementById("exportCSV").addEventListener("click",exportCSV);document.getElementById("exportXLSX").addEventListener("click",exportXLSX);document.getElementById("exportWatchCard").addEventListener("click",exportWatchCard);document.getElementById("downloadCSVTemplate").addEventListener("click",()=>downloadTemplate("csv"));document.getElementById("downloadJSONTemplate").addEventListener("click",()=>downloadTemplate("json"));document.getElementById("downloadExcelTemplate").addEventListener("click",()=>downloadTemplate("xlsx"));document.getElementById("saveSession").addEventListener("click",saveSession);document.getElementById("saveSession2").addEventListener("click",saveSession);document.getElementById("loadSessionBtn").addEventListener("click",()=>document.getElementById("loadSession").click());document.getElementById("loadSessionBtn2").addEventListener("click",()=>document.getElementById("loadSession2").click());document.getElementById("loadSession").addEventListener("change",e=>e.target.files[0]&&loadSession(e.target.files[0]));document.getElementById("loadSession2").addEventListener("change",e=>e.target.files[0]&&loadSession(e.target.files[0]));document.getElementById("addRowBtn").addEventListener("click",()=>{appState.rows.push({subindex:"GI",indicator_name:"",source:"",direction_to_risk:"Higher",min_bound:0,max_bound:1,current_value:"",prior_value:"",level_normalized:null,momentum_mstar:null,explanation:""});recalcAll()});document.getElementById("delRowsBtn").addEventListener("click",()=>{const checks=[...document.querySelectorAll(".rowcheck")];const todel=checks.filter(cb=>cb.checked).map(cb=>Number(cb.getAttribute("data-idx")));appState.rows=appState.rows.filter((_,i)=>!todel.includes(i));recalcAll()});document.getElementById("resetDefaultsBtn").addEventListener("click",()=>{appState.rows=defaultRows();appState.momentumWeights={...DEFAULT_MW};appState.flags={violent:false,ultimatum:false};recalcAll()});document.getElementById("loadSample").addEventListener("click",()=>{const sample=[
+      {subindex:"GI",indicator_name:"WGI CC",source:"WGI",direction_to_risk:"Lower",min_bound:-2.5,max_bound:2.5,current_value:-0.7,prior_value:-0.8,level_normalized:null,momentum_mstar:null,explanation:""},
+      {subindex:"GI",indicator_name:"CPI",source:"TI",direction_to_risk:"Lower",min_bound:0,max_bound:100,current_value:31,prior_value:30,level_normalized:null,momentum_mstar:null,explanation:""},
+      {subindex:"PCS",indicator_name:"FSI FE",source:"FSI",direction_to_risk:"Higher",min_bound:0,max_bound:10,current_value:7.5,prior_value:7.0,level_normalized:null,momentum_mstar:null,explanation:""},
+      {subindex:"PCS",indicator_name:"GPI Violent demos",source:"GPI",direction_to_risk:"Higher",min_bound:1,max_bound:5,current_value:3.2,prior_value:3.0,level_normalized:null,momentum_mstar:null,explanation:""},
+      {subindex:"SP",indicator_name:"FSI Security Apparatus",source:"FSI",direction_to_risk:"Higher",min_bound:0,max_bound:10,current_value:8.0,prior_value:7.8,level_normalized:null,momentum_mstar:null,explanation:""},
+      {subindex:"SP",indicator_name:"V-Dem internal conflict",source:"V-Dem",direction_to_risk:"Higher",min_bound:0,max_bound:1,current_value:0.60,prior_value:0.55,level_normalized:null,momentum_mstar:null,explanation:""},
+      {subindex:"SED",indicator_name:"Inflation",source:"World Bank",direction_to_risk:"Higher",min_bound:0,max_bound:50,current_value:15,prior_value:10,level_normalized:null,momentum_mstar:null,explanation:""},
+      {subindex:"SED",indicator_name:"WGI GE",source:"WGI",direction_to_risk:"Lower",min_bound:-2.5,max_bound:2.5,current_value:-0.6,prior_value:-0.5,level_normalized:null,momentum_mstar:null,explanation:""},
+      {subindex:"EXT",indicator_name:"FSI External Intervention",source:"FSI",direction_to_risk:"Higher",min_bound:0,max_bound:10,current_value:7.8,prior_value:7.4,level_normalized:null,momentum_mstar:null,explanation:""}
+    ];const {okRows,errors}=validateRows(sample);appState.rows=okRows;recalcAll();document.getElementById("validationReport").textContent=errors.length?errors.join("\n"):"Sample loaded OK"});setupTabs();recalcAll()}
+window.addEventListener("DOMContentLoaded",init);
+</script>
+</body>
+</html>

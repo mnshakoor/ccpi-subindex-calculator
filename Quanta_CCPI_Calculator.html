@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quanta Analytica MNS Consulting - CCPI Subindex Calculator</title>
+<style>
+  :root{
+    --bg:#0b1117; --panel:#141c24; --text:#e6edf3; --muted:#a9b1ba;
+    --accent:#4ea1ff; --good:#2ecc71; --warn:#f1c40f; --bad:#e74c3c;
+    --border:#263241; --card:#0f151c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  header{padding:20px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#0b1117,#0d141b)}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:40px;height:40px;border-radius:10px;background:conic-gradient(from 90deg,var(--accent),#8a5cff,#41d1ff);box-shadow:0 0 18px rgba(78,161,255,.35)}
+  h1{font-size:20px;margin:0}
+  .subtitle{color:var(--muted);font-size:13px;margin-top:4px}
+  nav{display:flex;gap:8px;margin-top:16px}
+  .tab{padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--panel);cursor:pointer;color:var(--muted)}
+  .tab.active{color:var(--text);border-color:var(--accent);box-shadow:0 0 0 1px rgba(78,161,255,.2) inset}
+  main{padding:18px;max-width:1100px;margin:0 auto}
+  .section{border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:16px;margin-bottom:16px}
+  .section h2{margin:0 0 10px;font-size:18px}
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+  .col-6{grid-column:span 6}
+  .col-4{grid-column:span 4}
+  .col-12{grid-column:span 12}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+  input[type="number"],select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text)}
+  input[type="checkbox"]{transform:scale(1.1)}
+  .row{display:flex;gap:10px;align-items:center}
+  .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:#0e1620;color:var(--text);cursor:pointer}
+  .btn.primary{border-color:var(--accent);background:rgba(78,161,255,.12)}
+  .btn.ghost{background:transparent}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .result{display:flex;align-items:center;gap:12px}
+  .badge{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid var(--border)}
+  .badge.watch{background:#203040}
+  .badge.elev{background:#2e3a18}
+  .badge.high{background:#3a2b18}
+  .badge.crit{background:#3a1818}
+  details{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px}
+  details>summary{cursor:pointer;color:var(--muted)}
+  table{width:100%;border-collapse:collapse}
+  th,td{border:1px solid var(--border);padding:8px;font-size:12px}
+  th{background:#101821}
+  .pill{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid var(--border);font-size:11px;color:var(--muted)}
+  .footer{color:var(--muted);font-size:12px;padding:20px;text-align:center}
+  .hr{height:1px;background:var(--border);margin:12px 0}
+  .note{color:var(--muted);font-size:12px}
+  .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;background:#0e1620;border:1px solid var(--border);border-radius:6px;padding:2px 6px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo" aria-hidden="true"></div>
+    <div>
+      <h1>Quanta Analytica MNS Consulting</h1>
+      <div class="subtitle">Composite Coup Precursor Index - Subindex Calculator</div>
+    </div>
+  </div>
+  <nav>
+    <button class="tab active" data-tab="calc">Calculator</button>
+    <button class="tab" data-tab="about">About CCPI</button>
+  </nav>
+</header>
+
+<main>
+  <!-- Calculator Tab -->
+  <section id="calc" class="tabpane">
+    <div class="section">
+      <h2>Quick subindex entry</h2>
+      <p class="note">Enter subindices already on 0 to 1 with momentum included if you wish. Or scroll down to Full indicator mode to compute from raw values.</p>
+      <div class="grid">
+        <div class="col-4">
+          <label for="gi">Governance Integrity GI 0 to 1</label>
+          <input id="gi" type="number" min="0" max="1" step="0.001" value="0.60">
+        </div>
+        <div class="col-4">
+          <label for="pcs">Political Contestation Stress PCS 0 to 1</label>
+          <input id="pcs" type="number" min="0" max="1" step="0.001" value="0.65">
+        </div>
+        <div class="col-4">
+          <label for="sp">Security Pressure SP 0 to 1</label>
+          <input id="sp" type="number" min="0" max="1" step="0.001" value="0.75">
+        </div>
+        <div class="col-4">
+          <label for="sed">Socioeconomic Distress SED 0 to 1</label>
+          <input id="sed" type="number" min="0" max="1" step="0.001" value="0.55">
+        </div>
+        <div class="col-4">
+          <label for="ext">External Intervention EXT 0 to 1</label>
+          <input id="ext" type="number" min="0" max="1" step="0.001" value="0.50">
+        </div>
+        <div class="col-4">
+          <label>Event flags</label>
+          <div class="row">
+            <label class="row"><input type="checkbox" id="flag1"> Violent transfer cue</label>
+            <label class="row"><input type="checkbox" id="flag2"> Military ultimatum or mutiny cue</label>
+          </div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div class="flex">
+        <button class="btn primary" id="computeQuick">Compute CCPI</button>
+        <div class="result" id="quickResult" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Full indicator mode</h2>
+      <p class="note">Provide raw indicator values. The calculator will normalize using fixed bounds and show the math. You can also enter the prior year to include momentum up to 25 percent within each subindex.</p>
+      <details open>
+        <summary><strong>1) Governance Integrity GI</strong> - components and inputs</summary>
+        <div class="grid" style="margin-top:10px">
+          <div class="col-6">
+            <label>WGI Control of Corruption current (−2.5 to +2.5)</label>
+            <input id="wgi_cc_t" type="number" min="-2.5" max="2.5" step="0.01" value="-0.8">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="wgi_cc_tm1" type="number" min="-2.5" max="2.5" step="0.01" value="-0.9">
+          </div>
+          <div class="col-6">
+            <label>WGI Rule of Law current (−2.5 to +2.5)</label>
+            <input id="wgi_rl_t" type="number" min="-2.5" max="2.5" step="0.01" value="-1.0">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="wgi_rl_tm1" type="number" min="-2.5" max="2.5" step="0.01" value="-1.05">
+          </div>
+          <div class="col-6">
+            <label>WGI Voice and Accountability current (−2.5 to +2.5)</label>
+            <input id="wgi_va_t" type="number" min="-2.5" max="2.5" step="0.01" value="-1.2">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="wgi_va_tm1" type="number" min="-2.5" max="2.5" step="0.01" value="-1.15">
+          </div>
+          <div class="col-6">
+            <label>Freedom House aggregate 0 to 100</label>
+            <input id="fh_t" type="number" min="0" max="100" step="1" value="44">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="fh_tm1" type="number" min="0" max="100" step="1" value="47">
+          </div>
+          <div class="col-6">
+            <label>Transparency Intl CPI 0 to 100</label>
+            <input id="cpi_t" type="number" min="0" max="100" step="1" value="28">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="cpi_tm1" type="number" min="0" max="100" step="1" value="30">
+          </div>
+          <div class="col-6">
+            <label>V-Dem EDI 0 to 1</label>
+            <input id="vdem_edi_t" type="number" min="0" max="1" step="0.01" value="0.35">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="vdem_edi_tm1" type="number" min="0" max="1" step="0.01" value="0.37">
+          </div>
+          <div class="col-12">
+            <label>Momentum weight within GI 0 to 0.25</label>
+            <input id="gi_mw" type="number" min="0" max="0.25" step="0.01" value="0.25">
+          </div>
+        </div>
+        <div class="hr"></div>
+        <details>
+          <summary>Show math for GI</summary>
+          <div id="gi_math" class="note"></div>
+        </details>
+      </details>
+
+      <details>
+        <summary><strong>2) Political Contestation Stress PCS</strong></summary>
+        <div class="grid" style="margin-top:10px">
+          <div class="col-6">
+            <label>FSI Factionalized Elites 0 to 10</label>
+            <input id="fsi_fe_t" type="number" min="0" max="10" step="0.1" value="8.0">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="fsi_fe_tm1" type="number" min="0" max="10" step="0.1" value="7.8">
+          </div>
+          <div class="col-6">
+            <label>GPI Violent demonstrations 1 to 5</label>
+            <input id="gpi_vd_t" type="number" min="1" max="5" step="0.1" value="4.0">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="gpi_vd_tm1" type="number" min="1" max="5" step="0.1" value="3.5">
+          </div>
+          <div class="col-6">
+            <label>GPI Political instability 1 to 5</label>
+            <input id="gpi_pi_t" type="number" min="1" max="5" step="0.1" value="3.5">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="gpi_pi_tm1" type="number" min="1" max="5" step="0.1" value="3.0">
+          </div>
+          <div class="col-12">
+            <label>Momentum weight within PCS 0 to 0.25</label>
+            <input id="pcs_mw" type="number" min="0" max="0.25" step="0.01" value="0.20">
+          </div>
+        </div>
+        <div class="hr"></div>
+        <details>
+          <summary>Show math for PCS</summary>
+          <div id="pcs_math" class="note"></div>
+        </details>
+      </details>
+
+      <details>
+        <summary><strong>3) Security Pressure SP</strong></summary>
+        <div class="grid" style="margin-top:10px">
+          <div class="col-6">
+            <label>FSI Security Apparatus 0 to 10</label>
+            <input id="fsi_sa_t" type="number" min="0" max="10" step="0.1" value="8.7">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="fsi_sa_tm1" type="number" min="0" max="10" step="0.1" value="8.3">
+          </div>
+          <div class="col-6">
+            <label>FSI Refugees and IDPs 0 to 10</label>
+            <input id="fsi_ridp_t" type="number" min="0" max="10" step="0.1" value="7.5">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="fsi_ridp_tm1" type="number" min="0" max="10" step="0.1" value="7.2">
+          </div>
+          <div class="col-6">
+            <label>V-Dem internal conflict 0 to 1</label>
+            <input id="vdem_conf_t" type="number" min="0" max="1" step="0.01" value="0.70">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="vdem_conf_tm1" type="number" min="0" max="1" step="0.01" value="0.65">
+          </div>
+          <div class="col-12">
+            <label>Momentum weight within SP 0 to 0.25</label>
+            <input id="sp_mw" type="number" min="0" max="0.25" step="0.01" value="0.20">
+          </div>
+        </div>
+        <div class="hr"></div>
+        <details>
+          <summary>Show math for SP</summary>
+          <div id="sp_math" class="note"></div>
+        </details>
+      </details>
+
+      <details>
+        <summary><strong>4) Socioeconomic Distress SED</strong></summary>
+        <div class="grid" style="margin-top:10px">
+          <div class="col-6">
+            <label>Annual inflation percent 0 to 50 clamp</label>
+            <input id="infl_t" type="number" min="0" max="50" step="0.1" value="18.0">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="infl_tm1" type="number" min="0" max="50" step="0.1" value="12.0">
+          </div>
+          <div class="col-6">
+            <label>GDP per capita trend percent change range -10 to +10</label>
+            <input id="gdp_trend_t" type="number" min="-10" max="10" step="0.1" value="-2.0">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="gdp_trend_tm1" type="number" min="-10" max="10" step="0.1" value="0.0">
+          </div>
+          <div class="col-6">
+            <label>BTI Status Index 1 to 10</label>
+            <input id="bti_t" type="number" min="1" max="10" step="0.1" value="4.5">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="bti_tm1" type="number" min="1" max="10" step="0.1" value="4.8">
+          </div>
+          <div class="col-6">
+            <label>WGI Government Effectiveness current -2.5 to +2.5</label>
+            <input id="wgi_ge_t" type="number" min="-2.5" max="2.5" step="0.01" value="-0.90">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="wgi_ge_tm1" type="number" min="-2.5" max="2.5" step="0.01" value="-0.85">
+          </div>
+          <div class="col-12">
+            <label>Momentum weight within SED 0 to 0.25</label>
+            <input id="sed_mw" type="number" min="0" max="0.25" step="0.01" value="0.15">
+          </div>
+        </div>
+        <div class="hr"></div>
+        <details>
+          <summary>Show math for SED</summary>
+          <div id="sed_math" class="note"></div>
+        </details>
+      </details>
+
+      <details>
+        <summary><strong>5) External Intervention EXT</strong></summary>
+        <div class="grid" style="margin-top:10px">
+          <div class="col-6">
+            <label>FSI External Intervention 0 to 10</label>
+            <input id="fsi_ext_t" type="number" min="0" max="10" step="0.1" value="8.0">
+          </div>
+          <div class="col-6">
+            <label>Prior year value</label>
+            <input id="fsi_ext_tm1" type="number" min="0" max="10" step="0.1" value="7.5">
+          </div>
+          <div class="col-12">
+            <label>Momentum weight within EXT 0 to 0.25</label>
+            <input id="ext_mw" type="number" min="0" max="0.25" step="0.01" value="0.10">
+          </div>
+        </div>
+        <div class="hr"></div>
+        <details>
+          <summary>Show math for EXT</summary>
+          <div id="ext_math" class="note"></div>
+        </details>
+      </details>
+
+      <div class="hr"></div>
+      <div class="flex">
+        <button class="btn primary" id="computeFull">Compute subindices and CCPI</button>
+        <div id="fullResult" class="result"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Watch-card export</h2>
+      <div class="grid">
+        <div class="col-4">
+          <label>Country</label>
+          <input id="country" type="text" placeholder="Country name">
+        </div>
+        <div class="col-4">
+          <label>Owner</label>
+          <input id="owner" type="text" placeholder="Risk owner">
+        </div>
+        <div class="col-4">
+          <label>Review date YYYY-MM-DD</label>
+          <input id="review" type="text" placeholder="2025-12-31">
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div class="flex">
+        <button class="btn" id="exportJSON">Export JSON</button>
+        <span class="note">This creates a minimal watch-card with CCPI, band, timestamp, and the fields above.</span>
+      </div>
+      <details style="margin-top:10px">
+        <summary>Show JSON</summary>
+        <pre id="jsonOut" class="note"></pre>
+      </details>
+    </div>
+  </section>
+
+  <!-- About Tab -->
+  <section id="about" class="tabpane" style="display:none">
+    <div class="section">
+      <h2>CCPI overview</h2>
+      <p>The Composite Coup Precursor Index aggregates five subindices that map to common precursor conditions preceding coups. Each subindex is normalized to 0 to 1 where higher means higher coup risk. The composite uses fixed weights, optional momentum within each subindex, and event flags that increase the final score.</p>
+      <ul>
+        <li><span class="pill">Governance Integrity GI 0.30</span> Aggregates WGI Control of Corruption, Rule of Law, Voice and Accountability, Freedom House aggregate, Transparency International CPI, and V-Dem Electoral Democracy Index. All are inverted so that lower governance quality yields higher risk.</li>
+        <li><span class="pill">Political Contestation Stress PCS 0.25</span> Includes FSI Factionalized Elites, GPI violent demonstrations and political instability, and where available FIW items on military in politics or a documented proxy.</li>
+        <li><span class="pill">Security Pressure SP 0.20</span> Uses FSI Security Apparatus, FSI Refugees and IDPs, and a V-Dem internal conflict measure.</li>
+        <li><span class="pill">Socioeconomic Distress SED 0.15</span> Combines annual inflation, GDP per capita trend, BTI Status Index, and WGI Government Effectiveness.</li>
+        <li><span class="pill">External Intervention EXT 0.10</span> Uses FSI External Intervention.</li>
+      </ul>
+      <p><strong>Momentum</strong> up to 25 percent within each subindex is computed from year over year deltas with direction correction. <strong>Event flags</strong> add +0.05 for a credible violent transfer cue and +0.05 for a public military ultimatum or mutiny cue near the event window.</p>
+      <div class="hr"></div>
+      <h2>Normalization rules</h2>
+      <ul>
+        <li>WGI components bound −2.5 to +2.5 and inverted.</li>
+        <li>Freedom House and CPI are 0 to 100 and inverted.</li>
+        <li>V-Dem EDI is 0 to 1 and inverted.</li>
+        <li>FSI indicators are 0 to 10 and used directly then divided by 10.</li>
+        <li>GPI 1 to 5 scales mapped to 0 to 1 using (x − 1)/4.</li>
+        <li>Inflation mapped 0 to 50 percent to 0 to 1 with clipping.</li>
+        <li>GDP trend mapped from −10 to +10 percent to 0 to 1 where lower trend increases risk.</li>
+      </ul>
+      <div class="hr"></div>
+      <h2>Bands</h2>
+      <p>Watch 0.30 to 0.49, Elevated 0.50 to 0.69, High 0.70 to 0.84, Critical 0.85 to 1.00.</p>
+      <div class="hr"></div>
+      <h2>Transparency notes</h2>
+      <p>Use fixed bounds from the methodology when available. Otherwise document min to max bounds across your comparison set. Keep an annex with raw values, direction, bounds, normalized value, and momentum for reproducibility. If a required indicator is missing, substitute the closest proxy and explain in a footnote.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  © <span id="year"></span> Quanta Analytica MNS Consulting. Built for analyst use. No external libraries used.
+</footer>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.tabpane').forEach(p=>p.style.display='none');
+      document.getElementById(tab).style.display='block';
+    });
+  });
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // Utility helpers
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  const round=(v,dp=3)=>Math.round(v*Math.pow(10,dp))/Math.pow(10,dp);
+
+  function band(score){
+    if(score>=0.85) return {name:'Critical', cls:'crit'};
+    if(score>=0.70) return {name:'High', cls:'high'};
+    if(score>=0.50) return {name:'Elevated', cls:'elev'};
+    if(score>=0.30) return {name:'Watch', cls:'watch'};
+    return {name:'Sub-watch', cls:'watch'};
+  }
+
+  function computeQuick(){
+    const gi=+document.getElementById('gi').value||0;
+    const pcs=+document.getElementById('pcs').value||0;
+    const sp=+document.getElementById('sp').value||0;
+    const sed=+document.getElementById('sed').value||0;
+    const ext=+document.getElementById('ext').value||0;
+    const f1=document.getElementById('flag1').checked?0.05:0;
+    const f2=document.getElementById('flag2').checked?0.05:0;
+    const base=0.30*gi+0.25*pcs+0.20*sp+0.15*sed+0.10*ext;
+    const ccpi=clamp(base+f1+f2,0,1);
+    const b=band(ccpi);
+    document.getElementById('quickResult').innerHTML =
+      `<span>CCPI base: <strong>${round(base)}</strong></span>` +
+      `<span>Flags: <strong>${round(f1+f2)}</strong></span>` +
+      `<span>CCPI: <strong>${round(ccpi)}</strong> <span class="badge ${b.cls}">${b.name}</span></span>`;
+  }
+  document.getElementById('computeQuick').addEventListener('click', computeQuick);
+
+  // Normalization helpers
+  function normHighRisk(x,xmin,xmax){ return clamp((x-xmin)/(xmax-xmin),0,1); }
+  function normLowRisk(x,xmin,xmax){ return clamp((xmax-x)/(xmax-xmin),0,1); }
+  function momentum(x_t,x_tm1,xmin,xmax, higherIsHigherRisk){
+    const delta = (x_t - x_tm1);
+    const c = (xmax - xmin)===0 ? 0 : delta / (xmax - xmin);
+    const m = higherIsHigherRisk ? c : -c;
+    const mstar = clamp(0.5 + 0.5*m, 0, 1);
+    return mstar;
+  }
+  function blend(levels, moms, w){
+    const L = levels.reduce((a,b)=>a+b,0) / levels.length;
+    if(w<=0 || moms.length===0){ return L; }
+    const M = moms.reduce((a,b)=>a+b,0) / moms.length;
+    return (1-w)*L + w*M;
+  }
+
+  function computeGI(){
+    const cc_t = +document.getElementById('wgi_cc_t').value;
+    const cc_tm1 = +document.getElementById('wgi_cc_tm1').value;
+    const rl_t = +document.getElementById('wgi_rl_t').value;
+    const rl_tm1 = +document.getElementById('wgi_rl_tm1').value;
+    const va_t = +document.getElementById('wgi_va_t').value;
+    const va_tm1 = +document.getElementById('wgi_va_tm1').value;
+    const fh_t = +document.getElementById('fh_t').value;
+    const fh_tm1 = +document.getElementById('fh_tm1').value;
+    const cpi_t = +document.getElementById('cpi_t').value;
+    const cpi_tm1 = +document.getElementById('cpi_tm1').value;
+    const edi_t = +document.getElementById('vdem_edi_t').value;
+    const edi_tm1 = +document.getElementById('vdem_edi_tm1').value;
+    const mw = +document.getElementById('gi_mw').value;
+
+    const r_cc = normLowRisk(cc_t,-2.5,2.5);
+    const r_rl = normLowRisk(rl_t,-2.5,2.5);
+    const r_va = normLowRisk(va_t,-2.5,2.5);
+    const r_fh = normLowRisk(fh_t,0,100);
+    const r_cpi = normLowRisk(cpi_t,0,100);
+    const r_edi = normLowRisk(edi_t,0,1);
+
+    const m_cc = momentum(cc_t,cc_tm1,-2.5,2.5,false);
+    const m_rl = momentum(rl_t,rl_tm1,-2.5,2.5,false);
+    const m_va = momentum(va_t,va_tm1,-2.5,2.5,false);
+    const m_fh = momentum(fh_t,fh_tm1,0,100,false);
+    const m_cpi = momentum(cpi_t,cpi_tm1,0,100,false);
+    const m_edi = momentum(edi_t,edi_tm1,0,1,false);
+
+    const GI = blend([r_cc,r_rl,r_va,r_fh,r_cpi,r_edi],[m_cc,m_rl,m_va,m_fh,m_cpi,m_edi], mw);
+    const math = `Levels: CC ${round(r_cc)}, RL ${round(r_rl)}, VA ${round(r_va)}, FH ${round(r_fh)}, CPI ${round(r_cpi)}, EDI ${round(r_edi)}.
+Momentum m*: CC ${round(m_cc)}, RL ${round(m_rl)}, VA ${round(m_va)}, FH ${round(m_fh)}, CPI ${round(m_cpi)}, EDI ${round(m_edi)}.
+Blend w=${mw}: GI = ${round(GI)}.`;
+    document.getElementById('gi_math').textContent = math;
+    return GI;
+  }
+
+  function computePCS(){
+    const fe_t=+document.getElementById('fsi_fe_t').value, fe_tm1=+document.getElementById('fsi_fe_tm1').value;
+    const vd_t=+document.getElementById('gpi_vd_t').value, vd_tm1=+document.getElementById('gpi_vd_tm1').value;
+    const pi_t=+document.getElementById('gpi_pi_t').value, pi_tm1=+document.getElementById('gpi_pi_tm1').value;
+    const mw=+document.getElementById('pcs_mw').value;
+
+    const r_fe=normHighRisk(fe_t,0,10);
+    const r_vd=normHighRisk(vd_t,1,5); // 1..5 mapped as (x-1)/4
+    const r_pi=normHighRisk(pi_t,1,5);
+
+    const m_fe=momentum(fe_t,fe_tm1,0,10,true);
+    const m_vd=momentum(vd_t,vd_tm1,1,5,true);
+    const m_pi=momentum(pi_t,pi_tm1,1,5,true);
+
+    const PCS=blend([r_fe,r_vd,r_pi],[m_fe,m_vd,m_pi],mw);
+    document.getElementById('pcs_math').textContent =
+      `Levels: FE ${round(r_fe)}, VD ${round(r_vd)}, PI ${round(r_pi)}. Momentum m*: FE ${round(m_fe)}, VD ${round(m_vd)}, PI ${round(m_pi)}. Blend w=${mw}: PCS = ${round(PCS)}.`;
+    return PCS;
+  }
+
+  function computeSP(){
+    const sa_t=+document.getElementById('fsi_sa_t').value, sa_tm1=+document.getElementById('fsi_sa_tm1').value;
+    const ridp_t=+document.getElementById('fsi_ridp_t').value, ridp_tm1=+document.getElementById('fsi_ridp_tm1').value;
+    const conf_t=+document.getElementById('vdem_conf_t').value, conf_tm1=+document.getElementById('vdem_conf_tm1').value;
+    const mw=+document.getElementById('sp_mw').value;
+
+    const r_sa=normHighRisk(sa_t,0,10);
+    const r_ridp=normHighRisk(ridp_t,0,10);
+    const r_conf=normHighRisk(conf_t,0,1);
+
+    const m_sa=momentum(sa_t,sa_tm1,0,10,true);
+    const m_ridp=momentum(ridp_t,ridp_tm1,0,10,true);
+    const m_conf=momentum(conf_t,conf_tm1,0,1,true);
+
+    const SP=blend([r_sa,r_ridp,r_conf],[m_sa,m_ridp,m_conf],mw);
+    document.getElementById('sp_math').textContent =
+      `Levels: SA ${round(r_sa)}, RIDP ${round(r_ridp)}, Conflict ${round(r_conf)}. Momentum m*: SA ${round(m_sa)}, RIDP ${round(m_ridp)}, Conflict ${round(m_conf)}. Blend w=${mw}: SP = ${round(SP)}.`;
+    return SP;
+  }
+
+  function computeSED(){
+    const infl_t=+document.getElementById('infl_t').value, infl_tm1=+document.getElementById('infl_tm1').value;
+    const gdp_t=+document.getElementById('gdp_trend_t').value, gdp_tm1=+document.getElementById('gdp_trend_tm1').value;
+    const bti_t=+document.getElementById('bti_t').value, bti_tm1=+document.getElementById('bti_tm1').value;
+    const ge_t=+document.getElementById('wgi_ge_t').value, ge_tm1=+document.getElementById('wgi_ge_tm1').value;
+    const mw=+document.getElementById('sed_mw').value;
+
+    const r_infl=normHighRisk(infl_t,0,50);
+    // GDP trend mapping: -10 to +10, lower is higher risk. Map to 0..1 with inversion over [-10,+10]
+    const r_gdp=normLowRisk(gdp_t,-10,10);
+    const r_bti=1 - normHighRisk(bti_t,1,10); // first map 1..10 to 0..1 high risk then invert
+    // better: convert to risk directly: r = 1 - (x-1)/9
+    const r_bti2 = 1 - ((bti_t - 1) / 9);
+    const r_ge=normLowRisk(ge_t,-2.5,2.5);
+
+    const m_infl=momentum(infl_t,infl_tm1,0,50,true);
+    const m_gdp=momentum(gdp_t,gdp_tm1,-10,10,false);
+    const m_bti=momentum(bti_t,bti_tm1,1,10,false);
+    const m_ge=momentum(ge_t,ge_tm1,-2.5,2.5,false);
+
+    const SED=blend([r_infl,r_gdp,r_bti2,r_ge],[m_infl,m_gdp,m_bti,m_ge],mw);
+    document.getElementById('sed_math').textContent =
+      `Levels: Inflation ${round(r_infl)}, GDP trend ${round(r_gdp)}, BTI ${round(r_bti2)}, Gov. Effectiveness ${round(r_ge)}. Momentum m*: Inflation ${round(m_infl)}, GDP ${round(m_gdp)}, BTI ${round(m_bti)}, GE ${round(m_ge)}. Blend w=${mw}: SED = ${round(SED)}.`;
+    return SED;
+  }
+
+  function computeEXT(){
+    const ext_t=+document.getElementById('fsi_ext_t').value, ext_tm1=+document.getElementById('fsi_ext_tm1').value;
+    const mw=+document.getElementById('ext_mw').value;
+    const r_ext=normHighRisk(ext_t,0,10);
+    const m_ext=momentum(ext_t,ext_tm1,0,10,true);
+    const EXT=blend([r_ext],[m_ext],mw);
+    document.getElementById('ext_math').textContent =
+      `Level: ${round(r_ext)}. Momentum m*: ${round(m_ext)}. Blend w=${mw}: EXT = ${round(EXT)}.`;
+    return EXT;
+  }
+
+  function computeComposite(subs){
+    const base = 0.30*subs.GI + 0.25*subs.PCS + 0.20*subs.SP + 0.15*subs.SED + 0.10*subs.EXT;
+    return { base, ccpi: clamp(base,0,1) };
+  }
+
+  function computeFull(){
+    const GI=computeGI();
+    const PCS=computePCS();
+    const SP=computeSP();
+    const SED=computeSED();
+    const EXT=computeEXT();
+    const comp=computeComposite({GI,PCS,SP,SED,EXT});
+    const b=band(comp.ccpi);
+    document.getElementById('fullResult').innerHTML =
+      `<span>GI ${round(GI)}</span><span>PCS ${round(PCS)}</span><span>SP ${round(SP)}</span><span>SED ${round(SED)}</span><span>EXT ${round(EXT)}</span>` +
+      `<span class="hr" style="width:1px;height:14px;display:inline-block"></span>` +
+      `<span>CCPI base: <strong>${round(comp.base)}</strong> <span class="badge ${b.cls}">${b.name}</span></span>`;
+  }
+  document.getElementById('computeFull').addEventListener('click', computeFull);
+
+  // Export JSON watch-card
+  document.getElementById('exportJSON').addEventListener('click', ()=>{
+    const country = document.getElementById('country').value || "Unknown";
+    const owner = document.getElementById('owner').value || "Unassigned";
+    const review = document.getElementById('review').value || "";
+    // Try to use latest computed values, else compute from quick
+    let resultText = document.getElementById('fullResult').textContent || "";
+    let ccpi = 0, bandName="Watch";
+    if(resultText.includes("CCPI base")){
+      // extract last number
+      const m = resultText.match(/CCPI base:\s*([0-9\.]+)/i);
+      if(m){ ccpi = parseFloat(m[1]); }
+    } else {
+      // compute from quick inputs
+      const gi=+document.getElementById('gi').value||0;
+      const pcs=+document.getElementById('pcs').value||0;
+      const sp=+document.getElementById('sp').value||0;
+      const sed=+document.getElementById('sed').value||0;
+      const ext=+document.getElementById('ext').value||0;
+      const base=0.30*gi+0.25*pcs+0.20*sp+0.15*sed+0.10*ext;
+      ccpi = clamp(base + (document.getElementById('flag1').checked?0.05:0) + (document.getElementById('flag2').checked?0.05:0),0,1);
+    }
+    const b = band(ccpi);
+    bandName = b.name;
+    const payload = {
+      country,
+      ccpi: round(ccpi),
+      band: bandName,
+      last_updated_utc: new Date().toISOString(),
+      owner,
+      review_date: review,
+      signposts_snapshot: []
+    };
+    const txt = JSON.stringify(payload, null, 2);
+    const pre = document.getElementById('jsonOut');
+    pre.textContent = txt;
+    // download
+    const blob = new Blob([txt], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ccpi_watchcard_${country.replace(/\s+/g,'_').toLowerCase()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+</script>
+</body>
+</html>
